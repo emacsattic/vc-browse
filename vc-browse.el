@@ -14,10 +14,10 @@
 (defvar vc-browse-upstream-function nil)
 
 (defun vc-git-file-path ()
-  (let ((root (expand-file-name
-               (locate-dominating-file (buffer-file-name)".git")))
-        (file (expand-file-name (buffer-file-name))))
-    (substring file (length root))))
+  (substring
+   (expand-file-name (buffer-file-name))
+   (length (expand-file-name
+            (locate-dominating-file (buffer-file-name)".git")))))
 
 (defun vc-git-browse-tracking ()
   (let ((branch (car (vc-git-branches))))
@@ -38,7 +38,7 @@
   'vc-git-transmute-github)
 
 (defun vc-git-transmute-url (remote-url branch)
-  (funcall (vc-git-transmuter remote-urla) remote-url branch))
+  (funcall (vc-git-transmuter remote-url) remote-url branch))
 
 (defun vc-git-browse-url ()
   (let* ((remote-branch (vc-git-browse-tracking))
