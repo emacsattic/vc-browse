@@ -11,8 +11,6 @@
 (defconst vc-git-transmutations
   '(("github\\.com" . vc-git-transmute-github)))
 
-(defvar vc-browse-upstream-function nil)
-
 (defun vc-git-file-path ()
   (substring
    (expand-file-name (buffer-file-name))
