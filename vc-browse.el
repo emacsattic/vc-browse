@@ -25,17 +25,21 @@
 ;;; Code:
 
 (require 'vc-git)
+(eval-when-compile
+  (require 'cl))
 
-(defun vc-git-transmute-github (remote branch)
-  (concat (replace-regexp-in-string
-           "^.*github\\.com."
-           "https://github.com/"
-           (replace-regexp-in-string "\\.git$" "" remote))
-          "/tree/" branch "/" (vc-git-file-path) "#L" (number-to-string
-                                                       (line-number-at-pos))))
+(defun vc-git-make-github-transmuter (&optional host)
+  (lexical-let ((target-host (or host "github.com")))
+    (lambda (remote branch)
+      (concat (replace-regexp-in-string
+               (concat "^.*" (regexp-quote target-host) ".")
+               (concat "https://" target-host "/")
+               (replace-regexp-in-string "\\.git$" "" remote))
+              "/tree/" branch "/" (vc-git-file-path) "#L" (number-to-string
+                                                           (line-number-at-pos))))))
 
 (defconst vc-git-transmutations
-  '(("github\\.com" . vc-git-transmute-github)))
+  (list (cons "github\\.com" (vc-git-make-github-transmuter))))
 
 (defun vc-git-file-path ()
   (substring
@@ -57,9 +61,14 @@
                       vc-git-program remote)) 0 -1))
 
 (defun vc-git-transmuter (remote-url)
-  ;; FIXME - this should iterate vc-git-transmutations and return the
-  ;; car of the match
-  'vc-git-transmute-github)
+  (let* ((muters vc-git-transmutations)
+         (found) (transmuter))
+    (while (and muters (not found))
+      (if (not (string-match (caar muters) remote-url))
+          (setq muters (cdr muters))
+        (setq found t)
+        (setq transmuter (cdar muters))))
+    transmuter))
 
 (defun vc-git-transmute-url (remote-url branch)
   (funcall (vc-git-transmuter remote-url) remote-url branch))
